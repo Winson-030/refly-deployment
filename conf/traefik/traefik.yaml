@@ -1,0 +1,49 @@
+providers:
+
+  docker:
+    exposedByDefault: false
+    watch: true
+    network: refly-network
+  file:
+    directory: /etc/traefik/dynamic
+    watch: true
+entryPoints:
+  web:
+    address: ':80'
+  websecure:
+    address: ':443'
+    http:
+      tls:
+        certResolver: letsencrypt
+api:
+  insecure: true
+certificatesResolvers:
+  letsencrypt:
+    acme:
+      email: test@localhost.com
+      storage: /etc/traefik/dynamic/acme.json
+      httpChallenge:
+        entryPoint: web
+accessLog:
+  filePath: /etc/traefik/logs/access.log
+  format: json
+  fields:
+    defaultMode: keep
+    names:
+      ClientAddr: keep
+      ClientUsername: keep
+      DownstreamStatus: keep
+      OriginStatus: keep
+      RequestAddr: keep
+      RequestHost: keep
+      RequestMethod: keep
+      RequestPath: keep
+      RequestPort: keep
+      RequestProtocol: keep
+      RouterName: keep
+      ServiceAddr: keep
+      ServiceName: keep
+      StartLocal: keep
+      entryPointName: keep
+    headers:
+      defaultMode: keep
