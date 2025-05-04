@@ -1,8 +1,21 @@
-
+include:
+  - path: docker-compose-traefik.yaml
+  - path: docker-compose-middleware.yaml
 services:
   api:
     image: reflyai/refly-api:0.4.2
     container_name: api
+    depends_on:
+      elasticsearch:
+        condition: service_healthy
+      db:
+        condition: service_healthy
+      minio:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      qdrant:
+        condition: service_healthy
     working_dir: /app/apps/api/dist
     # logging
     logging:
@@ -12,6 +25,7 @@ services:
         max-file: 1
 
     restart: always
+
 
     # extra_hosts:
     #   - "host.docker.internal:host-gateway"
@@ -28,7 +42,7 @@ services:
       # ----------------------------------------------
       # Required Environment Variables for API service
       # ----------------------------------------------
-
+      TZ: Asia/Shanghai
       # Embeddings provider (options: jina, openai, fireworks)
       EMBEDDINGS_PROVIDER: ${EMBEDDINGS_PROVIDER:-jina}
 
@@ -221,10 +235,11 @@ services:
     ports:
       - 80
     environment:
-      - API_URL=http://api:5800
-      - COLLAB_URL=http://api:5801
-      - STATIC_PUBLIC_ENDPOINT=http://api:5800/v1/misc/public
-      - STATIC_PRIVATE_ENDPOINT=http://api:5800/v1/misc
+      TZ: Asia/Shanghai
+      API_URL: http://api:5800
+      COLLAB_URL: http://api:5801
+      STATIC_PUBLIC_ENDPOINT: http://api:5800/v1/misc/public
+      STATIC_PRIVATE_ENDPOINT: http://api:5800/v1/misc
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:80"]
       interval: 30s
@@ -253,4 +268,5 @@ services:
 
 networks:
   refly-network:
-    external: true
+    driver: bridge
+    name: refly-network
