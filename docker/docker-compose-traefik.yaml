@@ -1,0 +1,39 @@
+
+
+services:
+
+  # traefik container
+  traefik:
+    image: traefik:v3.1.2 
+    restart: unless-stopped
+    container_name: traefik
+    security_opt:
+      - no-new-privileges:true
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - ../conf/traefik/traefik.yaml:/etc/traefik/traefik.yaml  # static traefik configuration
+      - ../conf/traefik/dynamic:/etc/traefik/dynamic  # dynamic traefik configuration
+    labels:
+      - "traefik.enable=true"
+
+      # define traefik dashboard router and service
+      - "traefik.http.routers.traefik.rule=Host(`dashboard.example.com`)" # change hostname!
+      - "traefik.http.routers.traefik.service=api@internal"
+      - "traefik.http.routers.traefik.tls.certresolver=letsencrypt"
+      - "traefik.http.routers.traefik.entrypoints=websecure"
+      - "traefik.http.routers.traefik.middlewares=auth"
+      - "traefik.http.middlewares.auth.basicauth.users=test:$$2y$$12$$ci.4U63YX83CwkyUrjqxAucnmi2xXOIlEF6T/KdP9824f1Rf1iyNG" # credentials test:test
+
+    networks:
+      - refly-network
+    environment:
+      - TZ=Asia/Shanghai
+    ports:
+      - target: 80
+        published: 80
+        protocol: tcp
+        mode: host
+      - target: 443
+        published: 443
+        protocol: tcp
+        mode: host
