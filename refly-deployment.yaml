@@ -9,7 +9,7 @@ kind: Namespace
 metadata:
   name: refly
 ---
-# Dify Config
+# Refly Config
 apiVersion: v1
 kind: ConfigMap
 metadata:
@@ -220,3 +220,286 @@ data:
   COLLAB_URL: 'http://refly-api:5801'
   # STATIC_PUBLIC_ENDPOINT: https://reflyapi.winson.dev/v1/misc/public
   # STATIC_PRIVATE_ENDPOINT: https://reflyapi.winson.dev/v1/misc
+---
+# Postgres DB
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  labels:
+    app.kubernetes.io/instance: refly-postgres
+  name: refly-postgres
+  namespace: refly
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  labels:
+    app.kubernetes.io/instance: refly-postgres
+  name: refly-postgres
+  namespace: refly
+rules:
+- apiGroups:
+  - "*"
+  resources:
+  - "*"
+  verbs:
+  - "*"
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  labels:
+    app.kubernetes.io/instance: refly-postgres
+  name: refly-postgres
+  namespace: refly
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: refly-postgres
+subjects:
+- kind: ServiceAccount
+  name: refly-postgres
+---
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: refly-postgres
+  namespace: refly
+spec:
+  selector:
+    matchLabels:
+      app: refly-postgres
+  serviceName: "refly-postgres"
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        app: refly-postgres
+    spec:
+      serviceAccountName: refly-postgres
+      terminationGracePeriodSeconds: 10
+      nodeSelector:
+        kubernetes.io/os: linux
+      containers:
+      - name: refly-postgres
+        image: postgres:15-alpine
+        env:
+        - name: TZ
+          valueFrom:
+            configMapKeyRef:
+              name: refly-shared-config
+              key: TZ            
+        - name: POSTGRES_DB
+          # value: refly
+          valueFrom:
+            configMapKeyRef:
+              name: refly-shared-config
+              key: POSTGRES_DB
+
+        - name: POSTGRES_USER
+          # value: refly
+          valueFrom:
+            configMapKeyRef:
+              name: refly-shared-config
+              key: POSTGRES_USER
+          
+
+        - name: POSTGRES_PASSWORD
+          # value: test
+          valueFrom:
+            configMapKeyRef:
+              name: refly-shared-config
+              key: POSTGRES_PASSWORD
+        - name: POSTGRES_MAX_CONNECTIONS
+          valueFrom:
+            configMapKeyRef:
+              name: refly-shared-config
+              key: POSTGRES_MAX_CONNECTIONS
+        - name: POSTGRES_SHARED_BUFFERS
+          valueFrom:
+            configMapKeyRef:
+              name: refly-shared-config
+              key: POSTGRES_SHARED_BUFFERS
+        - name: POSTGRES_WORK_MEM
+          valueFrom:
+            configMapKeyRef:
+              name: refly-shared-config
+              key: POSTGRES_WORK_MEM
+        - name: POSTGRES_MAINTENANCE_WORK_MEM
+          valueFrom:
+            configMapKeyRef:
+              name: refly-shared-config
+              key: POSTGRES_MAINTENANCE_WORK_MEM
+        - name: POSTGRES_EFFECTIVE_CACHE_SIZE
+          valueFrom:
+            configMapKeyRef:
+              name: refly-shared-config
+              key: POSTGRES_EFFECTIVE_CACHE_SIZE
+        livenessProbe:
+          exec:
+            command:
+            - "pg_isready"
+            - "-U"
+            - "$(PGUSER)"
+            - "-d"
+            - "$(POSTGRES_DB)"
+          initialDelaySeconds: 5
+          periodSeconds: 5
+          timeoutSeconds: 2
+          successThreshold: 1
+          failureThreshold: 10
+        resources:
+          limits:
+            cpu: 500m
+            memory: 1Gi
+          requests:
+            cpu: 100m
+            memory: 128Mi
+        ports:
+        - containerPort: 5432
+          name: postgres-port
+        volumeMounts:
+        - name: postgres-data
+          mountPath: /var/lib/postgresql/data
+      volumes:
+      - name: postgres-data
+        hostPath:
+          path: /root/refly/db/postgres/data
+          type: DirectoryOrCreate
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: refly-postgres
+  namespace: refly
+spec:
+  selector:
+    app: refly-postgres
+  type: ClusterIP
+  clusterIP: None
+  ports:
+  - name: postgres
+    protocol: TCP
+    port: 5432
+    targetPort: 5432
+
+# Postgres Server End
+# Redis Server Start
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  labels:
+    app.kubernetes.io/instance: refly-redis
+  name: refly-redis
+  namespace: refly
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  labels:
+    app.kubernetes.io/instance: refly-redis
+  name: refly-redis
+  namespace: refly
+rules:
+- apiGroups:
+  - "*"
+  resources:
+  - "*"
+  verbs:
+  - "*"
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  labels:
+    app.kubernetes.io/instance: refly-redis
+  name: refly-redis
+  namespace: refly
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: refly-redis
+subjects:
+- kind: ServiceAccount
+  name: refly-redis
+---
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: refly-redis
+  namespace: refly
+spec:
+  selector:
+    matchLabels:
+      app: refly-redis
+  serviceName: "refly-redis"
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        app: refly-redis
+    spec:
+      terminationGracePeriodSeconds: 10
+      nodeSelector:
+        kubernetes.io/os: linux
+      serviceAccountName: refly-redis
+      containers:
+      - name: refly-redis
+        image: redis:6-alpine
+        ports:
+        - containerPort: 6379
+          name: redis-p
+        command: [ "redis-server", "--save", "20", "1", "--loglevel", "warning", "--requirepass", "$(REDIS_PASSWORD)" ]
+        resources:
+          limits:
+            cpu: 500m
+            memory: 1024Mi
+          requests:
+            cpu: 100m
+            memory: 102Mi
+        env:
+        - name: TZ
+          valueFrom:
+            configMapKeyRef:
+              name: refly-shared-config
+              key: TZ        
+        - name: REDIS_PASSWORD
+          # value: refly
+          valueFrom:
+            configMapKeyRef:
+              name: refly-shared-config
+              key: REDIS_PASSWORD
+
+        livenessProbe:
+          exec:
+            command:
+            - redis-cli
+            - ping
+        volumeMounts:
+        - name: redis-data
+          mountPath: /data
+      volumes:
+      - name: redis-data
+        hostPath:
+          path: /root/refly/db/redis/data
+          type: DirectoryOrCreate
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: refly-redis
+  namespace: refly
+spec:
+  selector:
+    app: refly-redis
+  type: ClusterIP
+  clusterIP: None
+  ports:
+  - name: redis
+    protocol: TCP
+    port: 6379
+    targetPort: 6379
+
+# Redis Server End
+# Minio Server Start
