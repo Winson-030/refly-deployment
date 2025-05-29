@@ -1196,17 +1196,6 @@ spec:
         envFrom:
         - configMapRef:
             name: refly-shared-config
-        # env:
-        # - name: TZ
-        #   value: Asia/Shanghai
-        # - name: API_URL
-        #   value: /api
-        # - name: COLLAB_URL
-        #   value: /collab
-        # - name: STATIC_PUBLIC_ENDPOINT
-        #   value: /api/v1/misc/public
-        # - name: STATIC_PRIVATE_ENDPOINT
-        #   value: /api/v1/misc
         ports:
         - containerPort: 80
           name: web-http
