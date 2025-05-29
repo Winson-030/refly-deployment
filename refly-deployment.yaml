@@ -1,0 +1,222 @@
+###############################################################################
+# Author: Winson Li
+# Email: mail@winson.dev
+# Github: @Winson-030
+###############################################################################
+# Namespace
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: refly
+---
+# Dify Config
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: refly-shared-config
+  namespace: refly
+data:
+  # common
+  TZ: Asia/Shanghai
+  # postgres db
+  POSTGRES_DB: refly
+  POSTGRES_USER: refly
+  POSTGRES_PASSWORD: test
+  POSTGRES_MAX_CONNECTIONS: "150"
+  POSTGRES_SHARED_BUFFERS: 256MB
+  POSTGRES_WORK_MEM: 8MB
+  POSTGRES_MAINTENANCE_WORK_MEM: 128MB
+  POSTGRES_EFFECTIVE_CACHE_SIZE: 8192MB
+  # redis
+  REDIS_PASSWORD: refly
+  REDISTIMESERIES_ARGS: "RETENTION_POLICY=20"
+  # minio
+  MINIO_ROOT_USER: minio
+  MINIO_ROOT_PASSWORD: refly
+  # MINIO_DOMAIN: refly-minio
+  # MINIO_COMPRESSION_ENABLE: 'on'
+  # MINIO_COMPRESSION_ALLOW_ENCRYPTION: 'off'
+  # MINIO_API_ROOT_ACCESS: 'on'
+  # MINIO_BROWSER: 'on'
+  # MINIO_BROWSER_LOGIN_ANIMATION: 'off'
+  # MINIO_BROWSER_REDIRECT: 'false'
+  # MINIO_BROWSER_SESSION_DURATION: '365d'
+  # qdrant
+  # elastcisearch
+  ELASTIC_PASSWORD: refly
+  cluster.name: es-cluster
+  node.name: es-node01
+  discovery.type: single-node
+  xpack.license.self_generated.type: basic
+  xpack.security.enabled: 'true'
+  xpack.security.http.ssl.enabled: 'false'
+  # api
+
+  # Embeddings provider (options: jina, openai, fireworks)
+  EMBEDDINGS_PROVIDER: jina
+
+  # Name of the embeddings model to use
+  EMBEDDINGS_MODEL_NAME: jina-embeddings-v3
+
+  # OpenAI-compatible API base URL
+  OPENAI_BASE_URL: ''
+
+  # OpenAI-compatible API key, used for LLM inference and embeddings
+  OPENAI_API_KEY: ''
+
+  # OpenRouter API key, used for LLM inference
+  # will take precedence over OPENAI_API_KEY for LLM inference if set
+  OPENROUTER_API_KEY: ''
+
+  # Jina API key, used for embeddings
+  JINA_API_KEY: ''
+
+  # Fireworks API key, used for embeddings
+  FIREWORKS_API_KEY: ''
+
+  # Serper API key (https://serper.dev/), used for web search
+  SERPER_API_KEY: ''
+
+  #----------------------------------------------
+  # Optional Environment Variables for API service
+  # (will have reasonable default values)
+  #----------------------------------------------
+
+  # General Configuration
+  NODE_ENV: production
+  PORT: '5800'
+  WS_PORT: '5801'
+  ORIGIN: http://localhost:5700,http://localhost:5173
+
+  # Static Endpoint Configuration
+  STATIC_PUBLIC_ENDPOINT: /v1/misc/public
+  STATIC_PRIVATE_ENDPOINT: /v1/misc
+
+  # Redis Configuration
+  # host: redis
+  # port: 6379
+  # password: ''
+  REDIS_HOST: refly-redis
+  REDIS_PORT: '6379'
+  # REDIS_PASSWORD: 'U9Uj6ngoG2x5MAhR283h'm
+
+  # Database Configuration
+  # user: refly_admin
+  # password: refly_pwd
+  # database: refly
+  # schema: refly_schema
+  DATABASE_URL: postgresql://refly:test@refly-postgres:5432/refly?schema=refly
+  # Vector Store Configuration
+  # host: qdrant
+  # port: 6333
+  # api_key: ''
+  QDRANT_HOST: refly-qdrant
+  QDRANT_PORT: '6333'
+  QDRANT_API_KEY: ''
+  REFLY_VEC_DIM: '768'
+
+  # Elasticsearch Configuration
+  # url: http://elasticsearch:9200
+  # username: elastic
+  # password: ''
+  ELASTICSEARCH_URL: http://refly-elasticsearch:9200
+  ELASTICSEARCH_USERNAME: elastic
+  ELASTICSEARCH_PASSWORD: refly
+  FULLTEXT_SEARCH_BACKEND: refly-elasticsearch
+  # MinIO Configuration
+  # host: minio
+  # port: 9000
+  # use_ssl: false
+  # access_key: ''
+  # secret_key: ''
+  # internal bucket: refly-internal
+  # external bucket: refly-external
+  MINIO_INTERNAL_ENDPOINT: refly-minio
+  MINIO_INTERNAL_PORT: '9000'
+  MINIO_INTERNAL_USE_SSL: 'false'
+  MINIO_INTERNAL_ACCESS_KEY: minio
+  MINIO_INTERNAL_SECRET_KEY: refly
+  MINIO_INTERNAL_BUCKET: refly-internal
+
+  MINIO_EXTERNAL_ENDPOINT: refly-minio
+  MINIO_EXTERNAL_PORT: '9000'
+  MINIO_EXTERNAL_USE_SSL: 'false'
+  MINIO_EXTERNAL_ACCESS_KEY: minio
+  MINIO_EXTERNAL_SECRET_KEY: refly
+  MINIO_EXTERNAL_BUCKET: refly-external
+
+  # Authentication Configuration
+  AUTH_SKIP_VERIFICATION: 'true'
+  REFLY_COOKIE_DOMAIN: ''
+  REFLY_COOKIE_SECURE: ''
+  REFLY_COOKIE_SAME_SITE: ''
+  LOGIN_REDIRECT_URL: ''
+  JWT_SECRET: 'C0mpl3xR@nd0mS3cr3t!2023'
+  JWT_EXPIRATION_TIME: 6h
+  JWT_REFRESH_EXPIRATION_TIME: 7d
+
+  # Parser for PDF files (options: pdfjs, marker)
+  PARSER_PDF: pdfjs
+
+  # Marker API key (https://www.datalab.to/), required if PARSER_PDF=marker
+  MARKER_API_KEY: ''
+
+  # Collaboration Configuration
+  COLLAB_TOKEN_EXPIRY: 12h
+
+  # Email Authentication
+  EMAIL_AUTH_ENABLED: 'false'
+  EMAIL_SENDER: info@example.com
+
+  # Resend API Key. Required if email verification is enabled.
+  # You can get your own key from https://resend.com/
+  RESEND_API_KEY: ''
+
+  # GitHub Authentication
+  GITHUB_AUTH_ENABLED: 'false'
+  GITHUB_CLIENT_ID: ''
+  GITHUB_CLIENT_SECRET: ''
+  GITHUB_CALLBACK_URL: ''
+
+  # Google Authentication
+  GOOGLE_AUTH_ENABLED: 'false'
+  GOOGLE_CLIENT_ID: ''
+  GOOGLE_CLIENT_SECRET: ''
+  GOOGLE_CALLBACK_URL: ''
+
+  # Embeddings Configuration
+  EMBEDDINGS_DIMENSIONS: '768'
+  EMBEDDINGS_BATCH_SIZE: '512'
+
+  # Reranker Configuration
+  RERANKER_TOP_N: '10'
+  RERANKER_MODEL: jina-reranker-v2-base-multilingual
+  RERANKER_RELEVANCE_THRESHOLD: '0.5'
+
+  # Skill Configuration
+  SKILL_IDLE_TIMEOUT: '60000'
+  SKILL_EXECUTION_TIMEOUT: '180000'
+
+  # Stripe Configuration
+  STRIPE_API_KEY: ''
+  STRIPE_ACCOUNT_WEBHOOK_SECRET: ''
+  STRIPE_ACCOUNT_TEST_WEBHOOK_SECRET: ''
+  STRIPE_SESSION_SUCCESS_URL: ''
+  STRIPE_SESSION_CANCEL_URL: ''
+  STRIPE_PORTAL_RETURN_URL: ''
+
+  # Quota Configuration
+  QUOTA_T1_TOKEN: '-1'
+  QUOTA_T2_TOKEN: '-1'
+  QUOTA_T1_REQUEST: '-1'
+  QUOTA_T2_REQUEST: '-1'
+  QUOTA_STORAGE_FILE: '-1'
+  QUOTA_STORAGE_OBJECT: '-1'
+  QUOTA_STORAGE_VECTOR: '-1'
+  QUOTA_FILE_PARSE_PAGE: '-1'
+  # web
+
+  API_URL: 'http://refly-api:5800'
+  COLLAB_URL: 'http://refly-api:5801'
+  # STATIC_PUBLIC_ENDPOINT: https://reflyapi.winson.dev/v1/misc/public
+  # STATIC_PRIVATE_ENDPOINT: https://reflyapi.winson.dev/v1/misc
