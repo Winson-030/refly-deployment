@@ -449,7 +449,7 @@ spec:
         ports:
         - containerPort: 6379
           name: redis-p
-        command: [ "redis-server", "--save", "20", "1", "--loglevel", "warning"]
+        command: [ "redis-server", "--save", "20", "1", "--loglevel", "warning" ]
         resources:
           limits:
             cpu: 500m
@@ -990,12 +990,12 @@ spec:
       - name: wait-for-qdrant
         image: curlimages/curl:7.68.0
         command: [ 'sh', '-c', "until curl -s http://refly-qdrant:6333/healthz | grep -q 'healthz check passed'; do echo waiting for qdrant; sleep 2; done;" ]
-      # - name: wait-for-elasticsearch
-      #   image: curlimages/curl:7.68.0
-      #   command: [ 'sh', '-c', "until curl -s http://refly-elasticsearch:9200 >/dev/null ; do echo waiting for elasticsearch; sleep 2; done;" ]
+      - name: wait-for-elasticsearch
+        image: curlimages/curl:7.68.0
+        command: [ 'sh', '-c', "until curl -s http://refly-elasticsearch:9200; do echo waiting for elasticsearch; sleep 2; done;" ]
       - name: wait-for-minio
         image: curlimages/curl:7.68.0
-        command: [ 'sh', '-c', "until curl -f http://minio-service:9000/minio/health/live; do echo waiting for minio; sleep 2; done;" ]
+        command: [ 'sh', '-c', "until curl -s http://refly-minio:9000/minio/health/live; do echo waiting for minio; sleep 2; done;" ]
       containers:
       - name: refly-api
         image: reflyai/refly-api:0.6.0
